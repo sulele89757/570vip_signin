@@ -1,3 +1,10 @@
+"""
+任务名称
+name: 570vip签到脚本
+定时规则
+cron: 11 9 * * *
+"""
+
 # 第一步：获取oauth2 code
 # 获取oauth2 code http://www.570vip.com/wp-json/b2/v1/getRecaptcha
 # headers
@@ -62,11 +69,12 @@
 import json
 import requests
 import logging
+import notify
 
 # 配置日志
-logging.basicConfig(filename='sign_in.log', level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s',
-                    encoding='utf-8')
+# logging.basicConfig(filename='sign_in.log', level=logging.INFO,
+#                     format='%(asctime)s - %(levelname)s - %(message)s',
+#                     encoding='utf-8')
 
 # 配置
 BASE_URL = "http://www.570vip.com"
@@ -132,14 +140,14 @@ def sign_in(token):
         "Cookie"] = f"b2_token={token}; b2_back_url=http://www.570vip.com/vips;"
 
     try:
-        logging.info("开始签到...")
+        print("开始签到...")
         sign_url = BASE_URL + SIGN_IN_URL
-        logging.info("签到URL: %s", sign_url)
+        print("签到URL: %s", sign_url)
         response = requests.post(sign_url, headers=headers)
         response.raise_for_status()
-        logging.info("签到状态码: %s", response.status_code)
+        print("签到状态码: %s", response.status_code)
         data = response.json()
-        logging.info("签到响应: %s", data)
+        print("签到响应: %s", data)
         # 检查响应中的 code 字段
         if data.get('code') == 'user_error':
             # 如果 code 是 user_error，重新获取token
@@ -153,28 +161,30 @@ def sign_in(token):
 
     except requests.exceptions.HTTPError as e:
         # 处理 HTTP 错误
-        print(f"签到失败: {e}")
-        return e
+        print(f"签到失败: %s", str(e))
+        return str(e)
     except requests.exceptions.RequestException as e:
         # 处理其他类型的请求异常
-        print(f"签到失败: {e}")
-        return e
+        print(f"签到失败: %s", str(e))
+        return str(e)
     except Exception as e:
         # 处理其他异常
-        print(f"签到失败: {e}")
-        return e
+        print(f"签到失败: %s", str(e))
+        return str(e)
+
 
 def main():
     token = get_cached_token()
-    logging.info("使用缓存的token: %s", token)
+    print("缓存的token: %s", token)
     if not token:
         code = get_oauth2_code()
         token = get_token_with_code(code)
         cache_token(token)
-        logging.info("获取新的token: %s", token)
+        print("获取新的token: %s", token)
     response = sign_in(token)
-    logging.info("签到结果: %s", response)
+    # logging.info("签到结果: %s", response)
     print("签到结果:", response)
+    notify.send("570vip签到结果", response)
 
 if __name__ == "__main__":
     main()
