@@ -67,8 +67,8 @@ cron: 11 9 * * *
 # }
 
 import json
+
 import requests
-import notify
 
 # 配置日志
 # logging.basicConfig(filename='sign_in.log', level=logging.INFO,
@@ -94,6 +94,7 @@ HEADERS = {
     "Referer-Policy": "strict-origin-when-cross-origin"
 }
 
+
 # 尝试从缓存文件中读取token
 def get_cached_token():
     try:
@@ -103,16 +104,19 @@ def get_cached_token():
     except FileNotFoundError:
         return None
 
+
 # 缓存token到文件
 def cache_token(token):
     with open(TOKEN_CACHE_FILE, 'w') as f:
         json.dump({'token': token}, f)
+
 
 # 获取oauth2 code
 def get_oauth2_code():
     response = requests.post(BASE_URL + OAUTH2_CODE_URL, headers=HEADERS)
     response.raise_for_status()
     return response.json().get('token')  # 假设响应中token字段就是code
+
 
 # 用code换取token
 def get_token_with_code(code):
@@ -124,6 +128,7 @@ def get_token_with_code(code):
     response = requests.post(BASE_URL + TOKEN_URL, headers=HEADERS, data=data)
     response.raise_for_status()
     return response.json().get('token')
+
 
 # 进行签到
 # 响应值中有个code，如果是user_error，说明需要先登录
@@ -137,8 +142,7 @@ def get_token_with_code(code):
 def sign_in(token):
     headers = HEADERS.copy()
     headers["Authorization"] = f"Bearer {token}"
-    headers[
-        "Cookie"] = f"b2_token={token};"
+    headers["Cookie"] = f"b2_token={token};"
 
     try:
         print("开始签到...")
@@ -185,6 +189,7 @@ def main():
     response = sign_in(token)
     print("签到结果:", response)
     # notify.send("570vip签到结果", response)
+
 
 if __name__ == "__main__":
     main()
