@@ -68,7 +68,6 @@ cron: 11 9 * * *
 
 import json
 import requests
-import logging
 import notify
 
 # 配置日志
@@ -84,13 +83,15 @@ SIGN_IN_URL = "/wp-json/b2/v1/userMission"
 TOKEN_CACHE_FILE = "token_cache.json"
 
 HEADERS = {
-    "Referer": "http://www.570vip.com/guohua/1107/68.html",
+    "Referer": "http://www.570vip.com/mission/today",
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
     "Accept": "application/json, text/plain, */*",
     "Accept-Encoding": "gzip, deflate",
     "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7,ja;q=0.6",
     "Origin": "http://www.570vip.com",
-    "Pragma": "no-cache"
+    "Pragma": "no-cache",
+    "Cache-Control": "no-cache",
+    "Referer-Policy": "strict-origin-when-cross-origin"
 }
 
 # 尝试从缓存文件中读取token
@@ -137,17 +138,17 @@ def sign_in(token):
     headers = HEADERS.copy()
     headers["Authorization"] = f"Bearer {token}"
     headers[
-        "Cookie"] = f"b2_token={token}; b2_back_url=http://www.570vip.com/vips;"
+        "Cookie"] = f"b2_token={token};"
 
     try:
         print("开始签到...")
         sign_url = BASE_URL + SIGN_IN_URL
-        print("签到URL: %s", sign_url)
+        print("签到URL: ", sign_url)
         response = requests.post(sign_url, headers=headers)
         response.raise_for_status()
-        print("签到状态码: %s", response.status_code)
+        print("签到状态码: ", response.status_code)
         data = response.json()
-        print("签到响应: %s", data)
+        print("签到响应: ", data)
         # 检查响应中的 code 字段
         if data.get('code') == 'user_error':
             # 如果 code 是 user_error，重新获取token
@@ -161,30 +162,29 @@ def sign_in(token):
 
     except requests.exceptions.HTTPError as e:
         # 处理 HTTP 错误
-        print(f"签到失败: %s", str(e))
+        print(f"签到失败: ", str(e))
         return str(e)
     except requests.exceptions.RequestException as e:
         # 处理其他类型的请求异常
-        print(f"签到失败: %s", str(e))
+        print(f"签到失败: ", str(e))
         return str(e)
     except Exception as e:
         # 处理其他异常
-        print(f"签到失败: %s", str(e))
+        print(f"签到失败: ", str(e))
         return str(e)
 
 
 def main():
     token = get_cached_token()
-    print("缓存的token: %s", token)
+    print("缓存的token: ", token)
     if not token:
         code = get_oauth2_code()
         token = get_token_with_code(code)
         cache_token(token)
-        print("获取新的token: %s", token)
+        print("获取新的token: ", token)
     response = sign_in(token)
-    # logging.info("签到结果: %s", response)
     print("签到结果:", response)
-    notify.send("570vip签到结果", response)
+    # notify.send("570vip签到结果", response)
 
 if __name__ == "__main__":
     main()
