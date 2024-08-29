@@ -67,7 +67,8 @@ cron: 11 9 * * *
 # }
 
 import json
-
+import time
+import notify
 import requests
 
 # 配置日志
@@ -164,18 +165,10 @@ def sign_in(token):
 
         return data
 
-    except requests.exceptions.HTTPError as e:
-        # 处理 HTTP 错误
-        print(f"签到失败: ", str(e))
-        return str(e)
-    except requests.exceptions.RequestException as e:
-        # 处理其他类型的请求异常
-        print(f"签到失败: ", str(e))
-        return str(e)
     except Exception as e:
         # 处理其他异常
         print(f"签到失败: ", str(e))
-        return str(e)
+        raise e
 
 
 def main():
@@ -186,10 +179,24 @@ def main():
         token = get_token_with_code(code)
         cache_token(token)
         print("获取新的token: ", token)
-    response = sign_in(token)
-    print("签到结果:", response)
-    # notify.send("570vip签到结果", response)
 
+    max_retries = 5  # 设置最大重试次数
+    retry_count = 0
+    while retry_count < max_retries:
+        try:
+            response = sign_in(token)
+            print("签到结果:", response)
+            notify.send("570vip签到结果", response)
+            break  # 如果签到成功，跳出循环
+        except Exception as e:
+            print(f"签到失败，错误信息: {e}")
+            retry_count += 1
+            if retry_count < max_retries:
+                print(f"将在 {retry_count} 秒后重试...")
+                time.sleep(retry_count)  # 每次重试前等待一段时间
+            else:
+                print("达到最大重试次数，签到失败。")
+                notify.send("570vip签到失败", str(e))
 
 if __name__ == "__main__":
     main()
