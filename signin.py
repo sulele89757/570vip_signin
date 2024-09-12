@@ -1,6 +1,5 @@
 import json
 import time
-import notify
 import requests
 
 # 配置
@@ -121,7 +120,7 @@ def main():
         try:
             response = sign_in(session, token)
             print("签到结果:", response)
-            # notify.send("570vip签到结果", response)
+            QLAPI.notify('570vip签到失败', str(e))
             break  # 如果签到成功，跳出循环
         except Exception as e:
             print(f"签到失败，错误信息: {e}")
@@ -140,7 +139,7 @@ def main():
                 time.sleep(retry_count)  # 每次重试前等待一段时间
             else:
                 print("达到最大重试次数，签到失败。")
-                notify.send("570vip签到失败", str(e))
+                QLAPI.notify('570vip签到失败', str(e))
 
 if __name__ == "__main__":
     main()
